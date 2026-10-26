@@ -52,10 +52,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation("umg.edu.programacion2:gastos-core:1.0.0")
+    //implementation("umg.edu.programacion2:gastos-core:1.0.0")
     // Dependencias de Room para SQLite
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.8.4"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
+    implementation("androidx.activity:activity-ktx:1.8.2")
 }

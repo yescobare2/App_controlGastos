@@ -16,9 +16,9 @@ interface GastoDao {
 
     // Insertar un nuevo gasto
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertarGasto(gasto: GastoEntity)
+    suspend fun insertarGasto(gasto: GastoEntity) : Long
 
     // Borrar un gasto
     @Delete
-    suspend fun eliminarGasto(gasto: GastoEntity)
+    suspend fun eliminarGasto(gasto: GastoEntity) : Int
 }
