@@ -11,14 +11,14 @@ import kotlinx.coroutines.flow.Flow
 interface GastoDao {
 
     // Obtener todos los gastos en tiempo real usando Flow
-    @Query("SELECT * FROM gastos ORDER BY id DESC")
-    fun obtenerTodosLosGastos(): Flow<List<GastoEntity>>
+    @Query("SELECT * FROM movimientos ORDER BY id DESC")
+    fun obtenerTodosLosMovimientos(): Flow<List<GastoEntity>>
 
     // Insertar un nuevo gasto
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertarGasto(gasto: GastoEntity) : Long
+    suspend fun insertarMovimiento(movimiento: GastoEntity) : Long
 
     // Borrar un gasto
     @Delete
-    suspend fun eliminarGasto(gasto: GastoEntity) : Int
+    suspend fun eliminarMovimiento(moviento: GastoEntity) : Int
 }
