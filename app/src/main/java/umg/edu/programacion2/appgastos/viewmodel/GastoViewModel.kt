@@ -15,7 +15,7 @@ class GastoViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getDatabase(application).gastoDao()
 
     // Lista de gastos expuesta como StateFlow para que la interfaz se entere en tiempo real
-    val listaGastos: StateFlow<List<GastoEntity>> = dao.obtenerTodosLosGastos()
+    val listaGastos: StateFlow<List<GastoEntity>> = dao.obtenerTodosLosMovimientos()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -23,22 +23,23 @@ class GastoViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     // Función para agregar un nuevo gasto
-    fun agregarGasto(titulo: String, monto: Double, categoria: String, fecha: String) {
+    fun agregarMovimiento(titulo: String, monto: Double, categoria: String, fecha: String, tipo: String) {
         viewModelScope.launch {
-            val nuevoGasto = GastoEntity(
+            val nuevoMovimiento = GastoEntity(
                 titulo = titulo,
                 monto = monto,
                 categoria = categoria,
-                fecha = fecha
+                fecha = fecha,
+                tipo = tipo
             )
-            dao.insertarGasto(nuevoGasto)
+            dao.insertarMovimiento(nuevoMovimiento)
         }
     }
 
     // Función para eliminar un gasto
-    fun eliminarGasto(gasto: GastoEntity) {
+    fun eliminarMovimiento(movimiento: GastoEntity) {
         viewModelScope.launch {
-            dao.eliminarGasto(gasto)
+            dao.eliminarMovimiento(movimiento)
         }
     }
 }
