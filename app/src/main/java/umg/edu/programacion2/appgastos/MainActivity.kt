@@ -15,10 +15,11 @@ import umg.edu.programacion2.appgastos.viewmodel.GastoViewModel
 import umg.edu.programacion2.appgastos.data.GastoEntity
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.Alignment
 
 class MainActivity : ComponentActivity() {
 
-    private val gastoViewModel: GastoViewModel by viewModels()
+    private val viewModel: GastoViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                PantallaPrincipal(viewModel = gastoViewModel)
+                PantallaPrincipal(viewModel = viewModel)
             }
         }
     }
@@ -36,160 +37,169 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPrincipal(viewModel: GastoViewModel) {
-    val listaGastos by viewModel.listaGastos.collectAsState()
+    val listaMovimientos by viewModel.listaGastos.collectAsState()
 
-    // Estados para los campos
     var titulo by remember { mutableStateOf("") }
     var monto by remember { mutableStateOf("") }
+    var tipoSeleccionado by remember { mutableStateOf("GASTO") }
 
-    // Lista de categorías predeterminadas solicitadas
-    val categoriasDisponibles = listOf(
-        "Vivienda y Hogar",
-        "Alimentación",
-        "Transporte",
-        "Salud y cuidado personal",
-        "Entretenimiento",
-        "Finanzas",
-        "Otros"
+    val categoriasGastos = listOf(
+        "Vivienda y Hogar", "Alimentación", "Transporte",
+        "Salud y cuidado personal", "Entretenimiento", "Finanzas", "Otros"
     )
+    val categoriasIngresos = listOf("Salario", "Emprendimiento", "Bonos", "Otros")
 
-    // Estado para controlar la categoría seleccionada y si el menú está abierto
+    val categoriasDisponibles = if (tipoSeleccionado == "GASTO") categoriasGastos else categoriasIngresos
     var categoriaSeleccionada by remember { mutableStateOf(categoriasDisponibles[0]) }
+
+    LaunchedEffect(tipoSeleccionado) {
+        categoriaSeleccionada = if (tipoSeleccionado == "GASTO") categoriasGastos[0] else categoriasIngresos[0]
+    }
+
     var expanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Control de Gastos UMG") }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            // --- FORMULARIO PARA AGREGAR GASTO ---
-            OutlinedTextField(
-                value = titulo,
-                onValueChange = { titulo = it },
-                label = { Text("Descripción del gasto (ej. Almuerzo)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+    // Cálculo básico del balance
+    val totalIngresos = listaMovimientos.filter { it.tipo == "INGRESO" }.sumOf { it.monto }
+    val totalGastos = listaMovimientos.filter { it.tipo == "GASTO" }.sumOf { it.monto }
+    val balanceFinal = totalIngresos - totalGastos
 
-            OutlinedTextField(
-                value = monto,
-                onValueChange = { monto = it },
-                label = { Text("Monto (ej. 45.00)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // --- MENÚ DESPLEGABLE (EXPOSED DROPDOWN) PARA CATEGORÍAS ---
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = categoriaSeleccionada,
-                    onValueChange = {},
-                    readOnly = true, // Evita que el usuario escriba libremente
-                    label = { Text("Categoría") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                )
-
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    categoriasDisponibles.forEach { categoriaItem ->
-                        DropdownMenuItem(
-                            text = { Text(categoriaItem) },
-                            onClick = {
-                                categoriaSeleccionada = categoriaItem
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = {
-                    if (titulo.isNotBlank() && monto.isNotBlank()) {
-                        val montoDouble = monto.toDoubleOrNull() ?: 0.0
-                        val fechaActual = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-
-                        // Guardamos con la categoría seleccionada del menú
-                        viewModel.agregarGasto(titulo, montoDouble, categoriaSeleccionada, fechaActual)
-
-                        // Limpiamos campos principales
-                        titulo = ""
-                        monto = ""
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Guardar Gasto")
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- LISTA DE GASTOS REGISTRADOS ---
-            Text(
-                text = "Gastos Recientes",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(listaGastos) { gasto ->
-                    GastoItem(gasto = gasto, onDelete = {
-                        viewModel.eliminarGasto(gasto)
-                    })
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun GastoItem(gasto: GastoEntity, onDelete: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
+        // Título simple
+        Text(text = "Control Financiero", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Balance simple en texto
+        Text(text = "Ingresos: Q$totalIngresos")
+        Text(text = "Gastos: Q$totalGastos")
+        Text(text = "Balance Total: Q$balanceFinal", style = MaterialTheme.typography.titleMedium)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Selector básico de tipo (Gasto / Ingreso)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = gasto.titulo, style = MaterialTheme.typography.bodyLarge)
-                Text(text = "Categoría: ${gasto.categoria} • ${gasto.fecha}", style = MaterialTheme.typography.bodySmall)
+            Button(onClick = { tipoSeleccionado = "GASTO" }) {
+                Text("Gasto")
             }
-            Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                Text(
-                    text = "Q${gasto.monto}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                TextButton(onClick = onDelete) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+            Button(onClick = { tipoSeleccionado = "INGRESO" }) {
+                Text("Ingreso")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Tipo actual: $tipoSeleccionado", style = MaterialTheme.typography.bodyMedium)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Campos de texto simples
+        OutlinedTextField(
+            value = titulo,
+            onValueChange = { titulo = it },
+            label = { Text("Descripción") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = monto,
+            onValueChange = { monto = it },
+            label = { Text("Monto") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Menú desplegable simple de categorías
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = categoriaSeleccionada,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Categoría") },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                categoriasDisponibles.forEach { categoriaItem ->
+                    DropdownMenuItem(
+                        text = { Text(categoriaItem) },
+                        onClick = {
+                            categoriaSeleccionada = categoriaItem
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Botón de guardar simple
+        Button(
+            onClick = {
+                if (titulo.isNotBlank() && monto.isNotBlank()) {
+                    val montoDouble = monto.toDoubleOrNull() ?: 0.0
+                    val fechaActual = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+
+                    viewModel.agregarMovimiento(
+                        titulo = titulo,
+                        monto = montoDouble,
+                        categoria = categoriaSeleccionada,
+                        fecha = fechaActual,
+                        tipo = tipoSeleccionado
+                    )
+
+                    titulo = ""
+                    monto = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Guardar")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Divider()
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Lista simple de historial
+        Text(text = "Historial:", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(listaMovimientos) { movimiento ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(text = "${movimiento.titulo} (${movimiento.tipo})")
+                        Text(text = "${movimiento.categoria} - ${movimiento.fecha}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(text = "Q${movimiento.monto}")
+                        TextButton(onClick = { viewModel.eliminarMovimiento(movimiento) }) {
+                            Text("Borrar")
+                        }
+                    }
                 }
             }
         }
