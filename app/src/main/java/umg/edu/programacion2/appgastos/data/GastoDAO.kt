@@ -21,4 +21,11 @@ interface GastoDao {
     // Borrar un gasto
     @Delete
     suspend fun eliminarMovimiento(moviento: GastoEntity) : Int
+
+    // Métodos para categorías personalizadas
+    @Query("SELECT * FROM categorias WHERE tipo = :tipo ORDER BY id DESC")
+    fun obtenerCategoriasPorTipo(tipo: String): Flow<List<CategoriaEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarCategoria(categoria: CategoriaEntity): Long
 }
