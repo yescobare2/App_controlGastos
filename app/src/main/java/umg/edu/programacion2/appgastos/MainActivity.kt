@@ -18,7 +18,6 @@ import java.util.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import kotlinx.coroutines.launch
-
 class MainActivity : ComponentActivity() {
 
     private val viewModel: GastoViewModel by viewModels()
