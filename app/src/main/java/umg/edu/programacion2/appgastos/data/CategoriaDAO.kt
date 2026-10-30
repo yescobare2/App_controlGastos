@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoriaDao {
-    @Query("SELECT * FROM categorias_tabla WHERE tipo = :tipo")
+    @Query("SELECT * FROM categorias WHERE tipo = :tipo")
     fun obtenerCategoriasPorTipo(tipo: String): Flow<List<CategoriaEntity>>
 
     @Insert

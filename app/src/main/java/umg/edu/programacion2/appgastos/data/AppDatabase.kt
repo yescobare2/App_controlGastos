@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [GastoEntity::class], version = 1, exportSchema = false)
+@Database(entities = [GastoEntity::class, CategoriaEntity::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun gastoDao(): GastoDao
@@ -18,8 +18,10 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "control_gastos_db"
-                ).build()
+                    "gastos_smart_database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

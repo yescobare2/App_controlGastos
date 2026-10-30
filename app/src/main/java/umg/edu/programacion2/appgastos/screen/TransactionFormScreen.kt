@@ -1,4 +1,4 @@
-package umg.edu.programacion2.appgastos.ui
+package umg.edu.programacion2.appgastos.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
