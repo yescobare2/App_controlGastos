@@ -1,4 +1,4 @@
-package umg.edu.programacion2.appgastos.screen
+package umg.edu.programacion2.appgastos.ui.Screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
